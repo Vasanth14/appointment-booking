@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   ArrowUpCircleIcon,
   BarChartIcon,
@@ -17,12 +17,12 @@ import {
   PlusIcon,
   ClockIcon,
   CheckCircleIcon,
-} from "lucide-react"
+} from "lucide-react";
 
-import { NavDocuments } from "@/components/nav-documents"
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+import { NavDocuments } from "@/components/nav-documents";
+import { NavMain } from "@/components/nav-main";
+import { NavSecondary } from "@/components/nav-secondary";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -31,13 +31,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { useSelector } from "react-redux"
-import { selectIsAdmin, selectUser } from "@/store/slices/authSlice"
+} from "@/components/ui/sidebar";
+import { useSelector } from "react-redux";
+import { selectIsAdmin, selectUser } from "@/store/slices/authSlice";
+import Link from "next/link";
 
-export function AppSidebar({
-  ...props
-}) {
+export function AppSidebar({ ...props }) {
   const isAdmin = useSelector(selectIsAdmin);
   const user = useSelector(selectUser);
 
@@ -94,39 +93,41 @@ export function AppSidebar({
 
   const navItems = isAdmin ? adminNavItems : userNavItems;
 
-  const documents = isAdmin ? [
-    {
-      name: "Slot Reports",
-      url: "/dashboard/slots",
-      icon: DatabaseIcon,
-    },
-    {
-      name: "Booking Reports",
-      url: "/dashboard/appointments",
-      icon: ClipboardListIcon,
-    },
-    {
-      name: "Client Reports",
-      url: "/dashboard/clients",
-      icon: FileTextIcon,
-    },
-  ] : [
-    {
-      name: "My Appointments",
-      url: "/dashboard/my-bookings",
-      icon: ClipboardListIcon,
-    },
-    {
-      name: "Book New",
-      url: "/dashboard/book-appointment",
-      icon: PlusIcon,
-    },
-    {
-      name: "Past Bookings",
-      url: "/dashboard/my-bookings?tab=past",
-      icon: CheckCircleIcon,
-    },
-  ];
+  const documents = isAdmin
+    ? [
+        {
+          name: "Slot Reports",
+          url: "/dashboard/slots",
+          icon: DatabaseIcon,
+        },
+        {
+          name: "Booking Reports",
+          url: "/dashboard/appointments",
+          icon: ClipboardListIcon,
+        },
+        {
+          name: "Client Reports",
+          url: "/dashboard/clients",
+          icon: FileTextIcon,
+        },
+      ]
+    : [
+        {
+          name: "My Appointments",
+          url: "/dashboard/my-bookings",
+          icon: ClipboardListIcon,
+        },
+        {
+          name: "Book New",
+          url: "/dashboard/book-appointment",
+          icon: PlusIcon,
+        },
+        {
+          name: "Past Bookings",
+          url: "/dashboard/my-bookings?tab=past",
+          icon: CheckCircleIcon,
+        },
+      ];
 
   const userData = {
     name: user?.name || "User",
@@ -139,13 +140,16 @@ export function AppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
-              <a href="/dashboard">
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:!p-1.5"
+            >
+              <Link href="/dashboard">
                 <ArrowUpCircleIcon className="h-5 w-5" />
                 <span className="text-base font-semibold">
                   {isAdmin ? "Admin Panel" : "AppointMate"}
                 </span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -153,23 +157,6 @@ export function AppSidebar({
       <SidebarContent>
         <NavMain items={navItems} />
         <NavDocuments items={documents} />
-        <NavSecondary items={[
-          {
-            title: "Settings",
-            url: "/dashboard/settings",
-            icon: SettingsIcon,
-          },
-          {
-            title: "Get Help",
-            url: "/dashboard/help",
-            icon: HelpCircleIcon,
-          },
-          {
-            title: "Search",
-            url: "#",
-            icon: SearchIcon,
-          },
-        ]} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

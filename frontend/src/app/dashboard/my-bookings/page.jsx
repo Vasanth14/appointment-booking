@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, User, Phone, FileText, Loader2, XCircle } from "lucide-react";
+import { Calendar, Clock, User, Phone, FileText, Loader2, XCircle, SearchIcon, FilterIcon } from "lucide-react";
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { 
   fetchUpcomingBookings,
@@ -17,6 +17,354 @@ import {
   selectBookingsError 
 } from '@/store/slices/bookingSlice';
 import { toast } from 'sonner';
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import React from 'react'; // Added missing import for React
+
+// Data table columns for bookings
+const createColumns = (handleCancelBooking, isUpcomingTab) => [
+  {
+    accessorKey: "date",
+    header: "Date",
+    cell: ({ row }) => {
+      const booking = row.original;
+      const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      };
+      return (
+        <div className="flex flex-col">
+          <span className="font-medium">
+            {formatDate(booking.slot?.date)}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "time",
+    header: "Time",
+    cell: ({ row }) => {
+      const booking = row.original;
+      const formatTime = (timeString) => {
+        return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+      };
+      return (
+        <div className="flex flex-col">
+          <span className="font-medium">
+            {formatTime(booking.slot?.startTime)}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {formatTime(booking.slot?.endTime)}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "reason",
+    header: "Reason",
+    cell: ({ row }) => {
+      const booking = row.original;
+      return (
+        <div className="max-w-[200px]">
+          <span className="text-sm">{booking.reasonForVisit}</span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "contact",
+    header: "Contact",
+    cell: ({ row }) => {
+      const booking = row.original;
+      return (
+        <div className="text-sm">
+          {booking.contactNumber}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "notes",
+    header: "Notes",
+    cell: ({ row }) => {
+      const booking = row.original;
+      return (
+        <div className="max-w-[200px]">
+          <span className="text-sm text-muted-foreground">
+            {booking.additionalNotes || 'No notes'}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const booking = row.original;
+      const getStatusBadge = (status) => {
+        switch (status) {
+          case 'confirmed':
+            return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Confirmed</Badge>;
+          case 'cancelled':
+            return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">Cancelled</Badge>;
+          case 'completed':
+            return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">Completed</Badge>;
+          default:
+            return <Badge variant="secondary">{status}</Badge>;
+        }
+      };
+      return getStatusBadge(booking.status);
+    },
+  },
+  {
+    accessorKey: "bookingId",
+    header: "Booking ID",
+    cell: ({ row }) => {
+      const booking = row.original;
+      return (
+        <div className="text-sm text-muted-foreground">
+          {booking.id}
+        </div>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const booking = row.original;
+      
+      // Only show cancel button for upcoming confirmed bookings
+      if (isUpcomingTab && booking.status === 'confirmed') {
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleCancelBooking(booking.id)}
+            className="text-red-600 hover:text-red-700"
+          >
+            <XCircle className="h-4 w-4 mr-1" />
+            Cancel
+          </Button>
+        );
+      }
+      
+      return (
+        <div className="text-sm text-muted-foreground">
+          -
+        </div>
+      );
+    },
+  },
+];
+
+// Data table component for bookings
+function BookingsDataTable({ data, loading, onCancelBooking, isUpcomingTab }) {
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const columns = createColumns(onCancelBooking, isUpcomingTab);
+
+  // Filter data based on status
+  const filteredData = React.useMemo(() => {
+    if (!data) return [];
+    if (statusFilter === 'all') return data;
+    return data.filter(booking => booking.status === statusFilter);
+  }, [data, statusFilter]);
+
+  const table = useReactTable({
+    data: filteredData,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: setGlobalFilter,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      globalFilter,
+    },
+  });
+
+  return (
+    <div className="w-full">
+      <div className="flex items-center py-4 gap-4 flex-wrap">
+        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+          <SearchIcon className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search bookings..."
+            value={globalFilter ?? ""}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <FilterIcon className="h-4 w-4 text-muted-foreground" />
+          <Select
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Select
+          value={`${table.getState().pagination.pageSize}`}
+          onValueChange={(value) => {
+            table.setPageSize(Number(value));
+          }}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Rows per page" />
+          </SelectTrigger>
+          <SelectContent>
+            {[10, 20, 30, 40, 50].map((pageSize) => (
+              <SelectItem key={pageSize} value={`${pageSize}`}>
+                {pageSize} rows
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    Loading...
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <div className="flex flex-col items-center justify-center">
+                    <Calendar className="h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-muted-foreground">
+                      {isUpcomingTab ? 'No upcoming appointments' : 'No past appointments'}
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function MyBookingsPage() {
   const dispatch = useAppDispatch();
@@ -64,101 +412,6 @@ export default function MyBookingsPage() {
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const formatTime = (timeString) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'confirmed':
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Confirmed</Badge>;
-      case 'cancelled':
-        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">Cancelled</Badge>;
-      case 'completed':
-        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">Completed</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-     const BookingCard = ({ booking, showCancelButton = false }) => (
-     <Card key={booking.id}>
-      <CardContent className="p-6">
-        <div className="flex justify-between items-start">
-          <div className="space-y-3 flex-1">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{formatDate(booking.slot?.date)}</span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                {formatTime(booking.slot?.startTime)} - {formatTime(booking.slot?.endTime)}
-              </span>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Reason:</span>
-                                 <span className="text-sm">{booking.reasonForVisit}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Contact:</span>
-                <span className="text-sm">{booking.contactNumber}</span>
-              </div>
-              
-                             {booking.additionalNotes && (
-                 <div className="flex items-start gap-2">
-                   <User className="h-4 w-4 text-muted-foreground mt-0.5" />
-                   <div>
-                     <span className="text-sm font-medium">Notes:</span>
-                     <p className="text-sm text-muted-foreground">{booking.additionalNotes}</p>
-                   </div>
-                 </div>
-               )}
-            </div>
-            
-            <div className="flex gap-2">
-              {getStatusBadge(booking.status)}
-                                           <Badge variant="outline">
-                Booking ID: {booking.id}
-              </Badge>
-            </div>
-          </div>
-          
-          {showCancelButton && booking.status === 'confirmed' && (
-            <Button
-              size="sm"
-              variant="outline"
-                             onClick={() => handleCancelBooking(booking.id)}
-              className="text-red-600 hover:text-red-700"
-            >
-              <XCircle className="h-4 w-4 mr-1" />
-              Cancel
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -179,47 +432,21 @@ export default function MyBookingsPage() {
         </TabsList>
 
         <TabsContent value="upcoming" className="space-y-4">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : upcomingBookings.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No upcoming appointments</h3>
-                <p className="text-muted-foreground">You don't have any upcoming appointments.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-                          {upcomingBookings.map((booking) => (
-              <BookingCard key={booking.id} booking={booking} showCancelButton={true} />
-            ))}
-            </div>
-          )}
+          <BookingsDataTable 
+            data={upcomingBookings} 
+            loading={loading} 
+            onCancelBooking={handleCancelBooking}
+            isUpcomingTab={true}
+          />
         </TabsContent>
 
         <TabsContent value="past" className="space-y-4">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : pastBookings.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No past appointments</h3>
-                <p className="text-muted-foreground">You don't have any past appointments.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-                          {pastBookings.map((booking) => (
-              <BookingCard key={booking.id} booking={booking} showCancelButton={false} />
-            ))}
-            </div>
-          )}
+          <BookingsDataTable 
+            data={pastBookings} 
+            loading={loading} 
+            onCancelBooking={handleCancelBooking}
+            isUpcomingTab={false}
+          />
         </TabsContent>
       </Tabs>
     </div>

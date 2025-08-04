@@ -7,9 +7,7 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
-      console.log('LoginUser thunk: Starting login with credentials:', credentials);
       const response = await apiClient.login(credentials);
-      console.log('LoginUser thunk: API response:', response);
       
       const { user, tokens } = response;
       
@@ -19,10 +17,8 @@ export const loginUser = createAsyncThunk(
       // Store user data in localStorage for persistence
       localStorage.setItem('user', JSON.stringify(user));
       
-      console.log('LoginUser thunk: Tokens and user data stored, returning user data');
       return { user, token: tokens.access.token };
     } catch (error) {
-      console.error('LoginUser thunk: Error:', error);
       return rejectWithValue(error.message || 'Login failed');
     }
   }
@@ -69,28 +65,21 @@ export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
   async (_, { rejectWithValue }) => {
     try {
-      console.log('checkAuth: Starting authentication check');
       const token = getAccessToken();
-      console.log('checkAuth: Token retrieved:', token ? 'exists' : 'null');
       
       if (!token) {
-        console.log('checkAuth: No token found, throwing error');
         throw new Error('No token found');
       }
       
       // Decode and validate token
       const decodedToken = decodeToken(token);
       if (!decodedToken) {
-        console.log('checkAuth: Invalid token format');
         throw new Error('Invalid token format');
       }
-      
-      console.log('checkAuth: Token decoded successfully, user ID:', decodedToken.sub);
       
       // Check if token is expired
       const currentTime = Date.now() / 1000;
       if (decodedToken.exp < currentTime) {
-        console.log('checkAuth: Token is expired');
         throw new Error('Token expired');
       }
       
@@ -100,20 +89,16 @@ export const checkAuth = createAsyncThunk(
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          console.log('checkAuth: Using stored user data:', user);
           return user;
         } catch (e) {
-          console.log('checkAuth: Failed to parse stored user data');
+          // Failed to parse stored user data
         }
       }
       
       // If no stored user, try API call
-      console.log('checkAuth: Making API call to get profile');
       const response = await apiClient.getProfile();
-      console.log('checkAuth: Profile response:', response);
       return response;
     } catch (error) {
-      console.log('checkAuth: Error occurred:', error.message);
       clearTokens();
       return rejectWithValue(error.message || 'Authentication check failed');
     }
@@ -161,13 +146,11 @@ const authSlice = createSlice({
              state.token = token;
              state.user = JSON.parse(user);
              state.isAuthenticated = true;
-             console.log('initializeToken: Token and user set from localStorage');
            } catch (e) {
-             console.log('initializeToken: Failed to parse user data');
+             // Failed to parse user data
            }
          } else if (token) {
            state.token = token;
-           console.log('initializeToken: Token set from localStorage');
          }
          
          state.initialized = true;
@@ -182,13 +165,11 @@ const authSlice = createSlice({
         state.error = null;
       })
              .addCase(loginUser.fulfilled, (state, action) => {
-         console.log('LoginUser fulfilled: Updating state with payload:', action.payload);
          state.loading = false;
          state.user = action.payload.user;
          state.token = action.payload.token;
          state.isAuthenticated = true;
          state.error = null;
-         console.log('LoginUser fulfilled: New state:', { user: state.user, isAuthenticated: state.isAuthenticated });
        })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;

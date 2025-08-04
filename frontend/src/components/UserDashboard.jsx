@@ -96,7 +96,7 @@ export default function UserDashboard() {
       bgColor: "bg-green-100",
     },
     {
-      title: "Available 30-min Slots",
+      title: "Available Slots",
       value: availableSlots.length,
       icon: Clock,
       description: "Slots you can book",

@@ -2,7 +2,6 @@
 export const getAccessToken = () => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
-    console.log('getAccessToken called, token:', token ? 'exists' : 'null');
     return token;
   }
   return null;
@@ -17,10 +16,8 @@ export const getRefreshToken = () => {
 
 export const setTokens = (accessToken, refreshToken) => {
   if (typeof window !== 'undefined') {
-    console.log('setTokens called with:', { accessToken: accessToken ? 'exists' : 'null', refreshToken: refreshToken ? 'exists' : 'null' });
     localStorage.setItem('token', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
-    console.log('Tokens stored in localStorage');
   }
 };
 
