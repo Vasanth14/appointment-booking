@@ -35,8 +35,7 @@ export default function Home() {
             <span className="text-[#16a34a]"> Appointments</span>
           </h1>
           <p className="text-xl text-slate-600 dark:text-slate-300 mb-8">
-            Manage appointments and schedules with our intuitive dashboard. 
-            Built for modern businesses that value efficiency and user experience.
+            Manage appointments and schedules with ease with BookingFast Appointment System.
           </p>
           <div className="flex items-center justify-center space-x-4">
             <Link href="/dashboard">
