@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import AdminOnly from "@/components/AdminOnly"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Loader2 } from "lucide-react"
+import { Calendar, Loader2, Plus } from "lucide-react"
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { 
   fetchAdminUpcomingBookings,
@@ -17,8 +17,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { AppointmentsDataTable } from '@/components/appointments-data-table';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const upcomingBookings = useAppSelector(selectUpcomingBookings);
   const pastBookings = useAppSelector(selectPastBookings);
@@ -55,6 +57,13 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold">All Bookings</h1>
             <p className="text-muted-foreground">View and manage all appointment bookings</p>
           </div>
+          <Button 
+            onClick={() => router.push('/dashboard/slots')}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create your slot
+          </Button>
         </div>
 
         {/* Stats */}

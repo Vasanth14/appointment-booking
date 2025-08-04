@@ -63,11 +63,6 @@ export function AppSidebar({ ...props }) {
       url: "/dashboard/my-bookings",
       icon: ListIcon,
     },
-    {
-      title: "Available Slots",
-      url: "/dashboard/available-slots",
-      icon: ClockIcon,
-    },
   ];
 
   const navItems = isAdmin ? adminNavItems : userNavItems;

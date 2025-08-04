@@ -15,7 +15,6 @@ const ROUTE_ACCESS = {
   // User-only routes
   '/dashboard/my-bookings': { admin: false, user: true },
   '/dashboard/book-appointment': { admin: false, user: true },
-  '/dashboard/available-slots': { admin: false, user: true },
   
   // Shared routes (both admin and user can access)
   '/dashboard': { admin: true, user: true },

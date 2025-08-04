@@ -189,7 +189,6 @@ export default function UserDashboard() {
                   <TableHead>Reason</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -227,29 +226,6 @@ export default function UserDashboard() {
                       </TableCell>
                       <TableCell>{booking.contactNumber}</TableCell>
                       <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // View booking details
-                              toast.info("Viewing booking details...");
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {activeTab === "upcoming" && booking.status === "confirmed" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleCancelBooking(booking._id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
                     </TableRow>
                   ))
                 )}

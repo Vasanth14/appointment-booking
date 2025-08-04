@@ -53,8 +53,6 @@ const deleteSlot = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
-
-
 const getSlotsByCreator = catchAsync(async (req, res) => {
   const slots = await slotService.getSlotsByCreator(req.user.id);
   res.send(slots);

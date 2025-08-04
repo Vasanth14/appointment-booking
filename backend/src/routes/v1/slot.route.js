@@ -15,10 +15,6 @@ router
   .route('/available')
   .get(slotController.getAvailableSlots);
 
-
-
-
-
 router
   .route('/my-slots')
   .get(auth('manageSlots'), slotController.getSlotsByCreator);

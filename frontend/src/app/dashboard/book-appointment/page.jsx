@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, User, Phone, FileText, Loader2, CheckCircle } from "lucide-react";
+import { Calendar, Clock, User, Phone, FileText, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { 
   fetchAvailableSlots, 
@@ -23,6 +23,26 @@ import {
   selectBookingsError 
 } from '@/store/slices/bookingSlice';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+// Validation schema
+const bookingFormSchema = z.object({
+  reason: z.string()
+    .min(1, 'Reason for visit is required')
+    .min(3, 'Reason must be at least 3 characters')
+    .max(200, 'Reason must be less than 200 characters'),
+  contactNumber: z.string()
+    .min(1, 'Contact number is required')
+    .regex(/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number')
+    .refine((val) => {
+      // Remove all non-digit characters except + for validation
+      const cleaned = val.replace(/[\s\-\(\)\.]/g, '');
+      return cleaned.length >= 10 && cleaned.length <= 15;
+    }, 'Phone number must be between 10 and 15 digits'),
+  notes: z.string()
+    .max(500, 'Notes must be less than 500 characters')
+    .optional(),
+});
 
 export default function BookAppointmentPage() {
   const dispatch = useAppDispatch();
@@ -45,6 +65,8 @@ export default function BookAppointmentPage() {
     contactNumber: '',
     notes: '',
   });
+  const [formErrors, setFormErrors] = useState({});
+  const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
     console.log('=== FETCHING AVAILABLE SLOTS ===');
@@ -125,27 +147,76 @@ export default function BookAppointmentPage() {
       ...prev,
       [name]: value
     }));
+
+    // Clear error for this field when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+
+    // Real-time validation for phone number and reason
+    if (name === 'contactNumber' || name === 'reason') {
+      validateField(name, value);
+    }
+  };
+
+  const validateField = (fieldName, value) => {
+    // Create a partial schema for the specific field
+    const partialSchema = z.object({
+      [fieldName]: bookingFormSchema.shape[fieldName]
+    });
+    
+    try {
+      partialSchema.parse({ [fieldName]: value });
+      setFormErrors(prev => ({
+        ...prev,
+        [fieldName]: ''
+      }));
+    } catch (error) {
+      if (error instanceof z.ZodError && error.errors && error.errors.length > 0) {
+        const fieldError = error.errors.find(err => err.path[0] === fieldName);
+        if (fieldError) {
+          setFormErrors(prev => ({
+            ...prev,
+            [fieldName]: fieldError.message
+          }));
+        }
+      }
+    }
   };
 
   const validateForm = () => {
-    if (!formData.reason.trim()) {
-      toast.error('Please provide a reason for your visit');
+    setIsValidating(true);
+    
+    try {
+      bookingFormSchema.parse(formData);
+      setFormErrors({});
+      setIsValidating(false);
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError && error.errors && error.errors.length > 0) {
+        const errors = {};
+        error.errors.forEach((err) => {
+          if (err.path && err.path.length > 0) {
+            errors[err.path[0]] = err.message;
+          }
+        });
+        setFormErrors(errors);
+        
+        // Show first error in toast
+        const firstError = error.errors[0];
+        if (firstError && firstError.message) {
+          toast.error(firstError.message);
+        }
+      } else {
+        // Fallback error message
+        toast.error('Please check your form inputs');
+      }
+      setIsValidating(false);
       return false;
     }
-    
-    if (!formData.contactNumber.trim()) {
-      toast.error('Please provide your contact number');
-      return false;
-    }
-    
-    // Basic phone number validation
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    if (!phoneRegex.test(formData.contactNumber.replace(/[\s\-\(\)]/g, ''))) {
-      toast.error('Please enter a valid contact number');
-      return false;
-    }
-    
-    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -200,6 +271,8 @@ export default function BookAppointmentPage() {
       contactNumber: '',
       notes: '',
     });
+    setFormErrors({});
+    setIsValidating(false);
     setSelectedSlot(null);
     setShowBookingForm(false);
   };
@@ -370,7 +443,19 @@ export default function BookAppointmentPage() {
                   onChange={handleChange}
                   required
                   rows={3}
+                  className={formErrors.reason ? 'border-red-500 focus:border-red-500' : ''}
                 />
+                <div className="flex justify-between items-center">
+                  {formErrors.reason && (
+                    <div className="flex items-center gap-1 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      {formErrors.reason}
+                    </div>
+                  )}
+                  <span className={`text-xs ${formData.reason.length > 180 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                    {formData.reason.length}/200
+                  </span>
+                </div>
               </div>
               
               <div className="space-y-2">
@@ -382,14 +467,22 @@ export default function BookAppointmentPage() {
                   id="contactNumber"
                   name="contactNumber"
                   type="tel"
-                  placeholder="Enter your phone number"
+                  placeholder="Enter your phone number (e.g., +1234567890)"
                   value={formData.contactNumber}
                   onChange={handleChange}
                   required
+                  className={formErrors.contactNumber ? 'border-red-500 focus:border-red-500' : ''}
                 />
-                <p className="text-xs text-muted-foreground">
-                  We'll use this to contact you about your appointment
-                </p>
+                {formErrors.contactNumber ? (
+                  <div className="flex items-center gap-1 text-sm text-red-600">
+                    <AlertCircle className="h-4 w-4" />
+                    {formErrors.contactNumber}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    We'll use this to contact you about your appointment
+                  </p>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -404,10 +497,23 @@ export default function BookAppointmentPage() {
                   value={formData.notes}
                   onChange={handleChange}
                   rows={3}
+                  className={formErrors.notes ? 'border-red-500 focus:border-red-500' : ''}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Optional: Any special requirements or additional information
-                </p>
+                <div className="flex justify-between items-center">
+                  {formErrors.notes ? (
+                    <div className="flex items-center gap-1 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      {formErrors.notes}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Optional: Any special requirements or additional information
+                    </p>
+                  )}
+                  <span className={`text-xs ${formData.notes.length > 450 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                    {formData.notes.length}/500
+                  </span>
+                </div>
               </div>
               
               <div className="flex gap-2">
