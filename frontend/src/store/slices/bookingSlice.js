@@ -62,6 +62,30 @@ export const cancelBooking = createAsyncThunk(
   }
 );
 
+export const completeBooking = createAsyncThunk(
+  'bookings/completeBooking',
+  async (bookingId, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.completeBooking(bookingId);
+      return { bookingId, ...response };
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to complete booking');
+    }
+  }
+);
+
+export const deleteBooking = createAsyncThunk(
+  'bookings/deleteBooking',
+  async (bookingId, { rejectWithValue }) => {
+    try {
+      await apiClient.deleteBooking(bookingId);
+      return bookingId;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to delete booking');
+    }
+  }
+);
+
 export const fetchMyBookings = createAsyncThunk(
   'bookings/fetchMyBookings',
   async (_, { rejectWithValue }) => {
@@ -239,6 +263,55 @@ const bookingSlice = createSlice({
         state.error = null;
       })
       .addCase(cancelBooking.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Complete Booking
+      .addCase(completeBooking.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(completeBooking.fulfilled, (state, action) => {
+        state.loading = false;
+        const updateBookingInArray = (bookings) => {
+          const index = bookings.findIndex(booking => booking.id === action.payload.bookingId);
+          if (index !== -1) {
+            bookings[index] = action.payload;
+          }
+        };
+        
+        updateBookingInArray(state.bookings);
+        updateBookingInArray(state.myBookings);
+        updateBookingInArray(state.upcomingBookings);
+        updateBookingInArray(state.pastBookings);
+        
+        state.error = null;
+      })
+      .addCase(completeBooking.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Delete Booking
+      .addCase(deleteBooking.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteBooking.fulfilled, (state, action) => {
+        state.loading = false;
+        const removeBookingFromArray = (bookings) => {
+          return bookings.filter(booking => booking.id !== action.payload);
+        };
+        
+        state.bookings = removeBookingFromArray(state.bookings);
+        state.myBookings = removeBookingFromArray(state.myBookings);
+        state.upcomingBookings = removeBookingFromArray(state.upcomingBookings);
+        state.pastBookings = removeBookingFromArray(state.pastBookings);
+        
+        state.error = null;
+      })
+      .addCase(deleteBooking.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

@@ -50,9 +50,19 @@ class ApiClient {
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log('API success response:', data);
-      return data;
+      // Check if response has content before parsing JSON
+      const contentType = response.headers.get('content-type');
+      const hasContent = contentType && contentType.includes('application/json');
+      
+      if (hasContent) {
+        const data = await response.json();
+        console.log('API success response:', data);
+        return data;
+      } else {
+        // For responses with no content (like 204 No Content)
+        console.log('API success response: No content');
+        return null;
+      }
     } catch (error) {
       // Don't log auth-related errors as errors for auth endpoints
       if (endpoint.startsWith('/auth/') && error.message.includes('401')) {

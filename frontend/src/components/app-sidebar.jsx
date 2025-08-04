@@ -121,7 +121,7 @@ export function AppSidebar({ ...props }) {
               <Link href="/dashboard">
                 <ArrowUpCircleIcon className="h-5 w-5" />
                 <span className="text-base font-semibold">
-                  {isAdmin ? "Admin Panel" : "AppointMate"}
+                  {isAdmin ? "BookingFast - Admin" : "BookingFast - User"}
                 </span>
               </Link>
             </SidebarMenuButton>

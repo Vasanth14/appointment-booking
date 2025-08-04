@@ -13,15 +13,16 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronsLeftIcon,
   ChevronsRightIcon,
   MoreHorizontalIcon,
   EyeIcon,
   EditIcon,
   TrashIcon,
-  SearchIcon,
   FilterIcon,
 } from "lucide-react"
+import { useAppDispatch } from '@/store/hooks';
+import { deleteBooking } from '@/store/slices/bookingSlice';
+import { toast } from 'sonner';
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -32,7 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+
 import {
   Table,
   TableBody,
@@ -49,7 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const columns = [
+const createColumns = (onDeleteBooking) => [
   {
     accessorKey: "userName",
     header: "User Name",
@@ -170,18 +171,13 @@ const columns = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem className="flex items-center gap-2">
-              <EyeIcon className="h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex items-center gap-2">
-              <EditIcon className="h-4 w-4" />
-              Edit Booking
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex items-center gap-2 text-red-600">
+            <DropdownMenuItem 
+              className="flex items-center gap-2 text-red-600"
+              onClick={() => onDeleteBooking(booking.id)}
+            >
               <TrashIcon className="h-4 w-4" />
-              Delete Booking
+              Cancel Booking
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -190,13 +186,30 @@ const columns = [
   },
 ]
 
-export function AppointmentsDataTable({ data, loading }) {
+export function AppointmentsDataTable({ data, loading, onBookingDeleted }) {
+  const dispatch = useAppDispatch();
   const [sorting, setSorting] = React.useState([])
   const [columnFilters, setColumnFilters] = React.useState([])
   const [columnVisibility, setColumnVisibility] = React.useState({})
   const [rowSelection, setRowSelection] = React.useState({})
-  const [globalFilter, setGlobalFilter] = React.useState("")
+
   const [statusFilter, setStatusFilter] = React.useState("all")
+
+  const handleDeleteBooking = async (bookingId) => {
+    if (!confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await dispatch(deleteBooking(bookingId)).unwrap();
+      toast.success('Booking Cancelled successfully');
+      if (onBookingDeleted) {
+        onBookingDeleted();
+      }
+    } catch (error) {
+      toast.error(typeof error === 'string' ? error : error.message || 'Failed to delete booking');
+    }
+  };
 
   // Filter data based on status
   const filteredData = React.useMemo(() => {
@@ -204,6 +217,8 @@ export function AppointmentsDataTable({ data, loading }) {
     if (statusFilter === 'all') return data
     return data.filter(booking => booking.status === statusFilter)
   }, [data, statusFilter])
+
+  const columns = createColumns(handleDeleteBooking);
 
   const table = useReactTable({
     data: filteredData,
@@ -216,28 +231,19 @@ export function AppointmentsDataTable({ data, loading }) {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onGlobalFilterChange: setGlobalFilter,
+
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
-      globalFilter,
+
     },
   })
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4 gap-4 flex-wrap">
-        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-          <SearchIcon className="h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search bookings..."
-            value={globalFilter ?? ""}
-            onChange={(event) => setGlobalFilter(event.target.value)}
-            className="max-w-sm"
-          />
-        </div>
+      <div className="flex justify-end items-center py-4 gap-4 flex-wrap">
         <div className="flex items-center gap-2">
           <FilterIcon className="h-4 w-4 text-muted-foreground" />
           <Select

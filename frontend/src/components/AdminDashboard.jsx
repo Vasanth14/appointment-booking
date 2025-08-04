@@ -38,6 +38,12 @@ export default function AdminDashboard() {
     }
   }, [error]);
 
+  const handleBookingDeleted = () => {
+    // Refresh the data after a booking is deleted
+    dispatch(fetchAdminUpcomingBookings());
+    dispatch(fetchAdminPastBookings());
+  };
+
 
 
   return (
@@ -92,7 +98,11 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ) : (
-              <AppointmentsDataTable data={upcomingBookings} loading={false} />
+              <AppointmentsDataTable 
+                data={upcomingBookings} 
+                loading={false} 
+                onBookingDeleted={handleBookingDeleted}
+              />
             )}
           </TabsContent>
 
@@ -110,7 +120,11 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ) : (
-              <AppointmentsDataTable data={pastBookings} loading={false} />
+              <AppointmentsDataTable 
+                data={pastBookings} 
+                loading={false} 
+                onBookingDeleted={handleBookingDeleted}
+              />
             )}
           </TabsContent>
         </Tabs>

@@ -1,13 +1,9 @@
-import { Open_Sans } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 import { ReduxProvider } from '@/components/ReduxProvider'
 
-const openSans = Open_Sans({ 
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
-  display: 'swap',
-})
+const geistSans = GeistSans
 
 export const metadata = {
   title: 'Appointment Booking System',
@@ -17,7 +13,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={openSans.className}>
+      <body className={geistSans.className}>
         <ReduxProvider>
           {children}
           <Toaster />

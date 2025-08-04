@@ -11,8 +11,7 @@ export default function Home() {
       <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-slate-900/80">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Calendar className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">AppointMate</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">BookingFast</h1>
           </div>
           <div className="flex items-center space-x-4">
             <Link href="/login">
@@ -33,7 +32,7 @@ export default function Home() {
           </Badge>
           <h1 className="text-5xl font-bold text-slate-900 dark:text-white mb-6">
             Streamline Your
-            <span className="text-blue-600"> Appointments</span>
+            <span className="text-[#16a34a]"> Appointments</span>
           </h1>
           <p className="text-xl text-slate-600 dark:text-slate-300 mb-8">
             Manage appointments and schedules with our intuitive dashboard. 

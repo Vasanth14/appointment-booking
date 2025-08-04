@@ -117,8 +117,7 @@ export default function RegisterPage() {
             Back to Home
           </Link>
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <Calendar className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">AppointMate</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">BookingFast</h1>
           </div>
         </div>
 

@@ -1,23 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import UserOnly from "@/components/UserOnly";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, User, Phone, FileText, Loader2, XCircle, SearchIcon, FilterIcon } from "lucide-react";
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { 
+import {
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  FileText,
+  Loader2,
+  FilterIcon,
+} from "lucide-react";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import {
   fetchUpcomingBookings,
   fetchPastBookings,
-  cancelBooking,
   selectUpcomingBookings,
   selectPastBookings,
   selectBookingsLoading,
-  selectBookingsError 
-} from '@/store/slices/bookingSlice';
-import { toast } from 'sonner';
+  selectBookingsError,
+} from "@/store/slices/bookingSlice";
+import { toast } from "sonner";
 import {
   flexRender,
   getCoreRowModel,
@@ -34,7 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+
 import {
   Select,
   SelectContent,
@@ -42,28 +49,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import React from 'react'; // Added missing import for React
+import React from "react"; // Added missing import for React
 
 // Data table columns for bookings
-const createColumns = (handleCancelBooking, isUpcomingTab) => [
+const createColumns = () => [
   {
     accessorKey: "date",
     header: "Date",
     cell: ({ row }) => {
       const booking = row.original;
       const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric'
+        return new Date(dateString).toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
         });
       };
       return (
         <div className="flex flex-col">
-          <span className="font-medium">
-            {formatDate(booking.slot?.date)}
-          </span>
+          <span className="font-medium">{formatDate(booking.slot?.date)}</span>
         </div>
       );
     },
@@ -74,11 +79,14 @@ const createColumns = (handleCancelBooking, isUpcomingTab) => [
     cell: ({ row }) => {
       const booking = row.original;
       const formatTime = (timeString) => {
-        return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        });
+        return new Date(`2000-01-01T${timeString}`).toLocaleTimeString(
+          "en-US",
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          }
+        );
       };
       return (
         <div className="flex flex-col">
@@ -109,11 +117,7 @@ const createColumns = (handleCancelBooking, isUpcomingTab) => [
     header: "Contact",
     cell: ({ row }) => {
       const booking = row.original;
-      return (
-        <div className="text-sm">
-          {booking.contactNumber}
-        </div>
-      );
+      return <div className="text-sm">{booking.contactNumber}</div>;
     },
   },
   {
@@ -124,7 +128,7 @@ const createColumns = (handleCancelBooking, isUpcomingTab) => [
       return (
         <div className="max-w-[200px]">
           <span className="text-sm text-muted-foreground">
-            {booking.additionalNotes || 'No notes'}
+            {booking.additionalNotes || "No notes"}
           </span>
         </div>
       );
@@ -137,12 +141,24 @@ const createColumns = (handleCancelBooking, isUpcomingTab) => [
       const booking = row.original;
       const getStatusBadge = (status) => {
         switch (status) {
-          case 'confirmed':
-            return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Confirmed</Badge>;
-          case 'cancelled':
-            return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">Cancelled</Badge>;
-          case 'completed':
-            return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">Completed</Badge>;
+          case "confirmed":
+            return (
+              <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                Confirmed
+              </Badge>
+            );
+          case "cancelled":
+            return (
+              <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">
+                Cancelled
+              </Badge>
+            );
+          case "completed":
+            return (
+              <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
+                Completed
+              </Badge>
+            );
           default:
             return <Badge variant="secondary">{status}</Badge>;
         }
@@ -155,59 +171,26 @@ const createColumns = (handleCancelBooking, isUpcomingTab) => [
     header: "Booking ID",
     cell: ({ row }) => {
       const booking = row.original;
-      return (
-        <div className="text-sm text-muted-foreground">
-          {booking.id}
-        </div>
-      );
-    },
-  },
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      const booking = row.original;
-      
-      // Only show cancel button for upcoming confirmed bookings
-      if (isUpcomingTab && booking.status === 'confirmed') {
-        return (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleCancelBooking(booking.id)}
-            className="text-red-600 hover:text-red-700"
-          >
-            <XCircle className="h-4 w-4 mr-1" />
-            Cancel
-          </Button>
-        );
-      }
-      
-      return (
-        <div className="text-sm text-muted-foreground">
-          -
-        </div>
-      );
+      return <div className="text-sm text-muted-foreground">{booking.id}</div>;
     },
   },
 ];
 
 // Data table component for bookings
-function BookingsDataTable({ data, loading, onCancelBooking, isUpcomingTab }) {
+function BookingsDataTable({ data, loading }) {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
-  const [globalFilter, setGlobalFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const columns = createColumns(onCancelBooking, isUpcomingTab);
+  const columns = createColumns();
 
   // Filter data based on status
   const filteredData = React.useMemo(() => {
     if (!data) return [];
-    if (statusFilter === 'all') return data;
-    return data.filter(booking => booking.status === statusFilter);
+    if (statusFilter === "all") return data;
+    return data.filter((booking) => booking.status === statusFilter);
   }, [data, statusFilter]);
 
   const table = useReactTable({
@@ -221,34 +204,20 @@ function BookingsDataTable({ data, loading, onCancelBooking, isUpcomingTab }) {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
-      globalFilter,
     },
   });
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4 gap-4 flex-wrap">
-        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-          <SearchIcon className="h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search bookings..."
-            value={globalFilter ?? ""}
-            onChange={(event) => setGlobalFilter(event.target.value)}
-            className="max-w-sm"
-          />
-        </div>
+      <div className="flex justify-end items-center py-4 gap-4 flex-wrap">
         <div className="flex items-center gap-2">
           <FilterIcon className="h-4 w-4 text-muted-foreground" />
-          <Select
-            value={statusFilter}
-            onValueChange={setStatusFilter}
-          >
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -301,7 +270,10 @@ function BookingsDataTable({ data, loading, onCancelBooking, isUpcomingTab }) {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   <div className="flex items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin mr-2" />
                     Loading...
@@ -326,11 +298,14 @@ function BookingsDataTable({ data, loading, onCancelBooking, isUpcomingTab }) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   <div className="flex flex-col items-center justify-center">
                     <Calendar className="h-8 w-8 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground">
-                      {isUpcomingTab ? 'No upcoming appointments' : 'No past appointments'}
+                      No appointments found
                     </p>
                   </div>
                 </TableCell>
@@ -374,44 +349,46 @@ export default function MyBookingsPage() {
   const loading = useAppSelector(selectBookingsLoading);
   const error = useAppSelector(selectBookingsError);
 
-  console.log('My Bookings - upcomingBookings:', upcomingBookings, 'pastBookings:', pastBookings, 'loading:', loading, 'error:', error);
+  console.log(
+    "My Bookings - upcomingBookings:",
+    upcomingBookings,
+    "pastBookings:",
+    pastBookings,
+    "loading:",
+    loading,
+    "error:",
+    error
+  );
 
-  const [activeTab, setActiveTab] = useState('upcoming');
+  const [activeTab, setActiveTab] = useState("upcoming");
 
   useEffect(() => {
-    console.log('=== FETCHING MY BOOKINGS ===');
-    dispatch(fetchUpcomingBookings()).then((result) => {
-      console.log('fetchUpcomingBookings result:', result);
-    }).catch((error) => {
-      console.error('fetchUpcomingBookings error:', error);
-    });
-    dispatch(fetchPastBookings()).then((result) => {
-      console.log('fetchPastBookings result:', result);
-    }).catch((error) => {
-      console.error('fetchPastBookings error:', error);
-    });
+    console.log("=== FETCHING MY BOOKINGS ===");
+    dispatch(fetchUpcomingBookings())
+      .then((result) => {
+        console.log("fetchUpcomingBookings result:", result);
+      })
+      .catch((error) => {
+        console.error("fetchUpcomingBookings error:", error);
+      });
+    dispatch(fetchPastBookings())
+      .then((result) => {
+        console.log("fetchPastBookings result:", result);
+      })
+      .catch((error) => {
+        console.error("fetchPastBookings error:", error);
+      });
   }, [dispatch]);
 
   useEffect(() => {
     if (error) {
-      toast.error(typeof error === 'string' ? error : error.message || 'Failed to cancel booking');
+      toast.error(
+        typeof error === "string"
+          ? error
+          : error.message || "Failed to load bookings"
+      );
     }
   }, [error]);
-
-  const handleCancelBooking = async (bookingId) => {
-    if (!confirm('Are you sure you want to cancel this appointment?')) return;
-
-    try {
-      await dispatch(cancelBooking(bookingId)).unwrap();
-      toast.success('Appointment cancelled successfully');
-      
-      // Refresh bookings
-      dispatch(fetchUpcomingBookings());
-      dispatch(fetchPastBookings());
-    } catch (error) {
-      toast.error(typeof error === 'string' ? error : error.message || 'Failed to cancel appointment');
-    }
-  };
 
   return (
     <UserOnly>
@@ -419,39 +396,29 @@ export default function MyBookingsPage() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold">My Bookings</h1>
-          <p className="text-muted-foreground">View and manage your appointments</p>
+          <p className="text-muted-foreground">
+            View and manage your appointments
+          </p>
         </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="upcoming">
-            Upcoming ({upcomingBookings.length})
-          </TabsTrigger>
-          <TabsTrigger value="past">
-            Past ({pastBookings.length})
-          </TabsTrigger>
-        </TabsList>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upcoming">
+              Upcoming ({upcomingBookings.length})
+            </TabsTrigger>
+            <TabsTrigger value="past">Past ({pastBookings.length})</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="upcoming" className="space-y-4">
-          <BookingsDataTable 
-            data={upcomingBookings} 
-            loading={loading} 
-            onCancelBooking={handleCancelBooking}
-            isUpcomingTab={true}
-          />
-        </TabsContent>
+          <TabsContent value="upcoming" className="space-y-4">
+            <BookingsDataTable data={upcomingBookings} loading={loading} />
+          </TabsContent>
 
-        <TabsContent value="past" className="space-y-4">
-          <BookingsDataTable 
-            data={pastBookings} 
-            loading={loading} 
-            onCancelBooking={handleCancelBooking}
-            isUpcomingTab={false}
-          />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="past" className="space-y-4">
+            <BookingsDataTable data={pastBookings} loading={loading} />
+          </TabsContent>
+        </Tabs>
       </div>
     </UserOnly>
   );
-} 
+}
