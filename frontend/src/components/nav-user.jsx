@@ -7,6 +7,9 @@ import {
   MoreVerticalIcon,
   UserCircleIcon,
 } from "lucide-react"
+import { useAppDispatch } from '@/store/hooks';
+import { logoutUser } from '@/store/slices/authSlice';
+import { toast } from 'sonner';
 
 import {
   Avatar,
@@ -33,6 +36,19 @@ export function NavUser({
   user
 }) {
   const { isMobile } = useSidebar()
+  const dispatch = useAppDispatch();
+
+  const handleLogout = async () => {
+    try {
+      const result = await dispatch(logoutUser()).unwrap();
+      toast.success(result.message || 'Logged out successfully');
+      // AuthRouter will handle the redirect automatically
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if there's an error, the user should still be logged out locally
+      toast.success('Logged out successfully');
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -90,7 +106,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOutIcon />
               Log out
             </DropdownMenuItem>

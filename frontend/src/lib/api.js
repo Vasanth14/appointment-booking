@@ -67,10 +67,25 @@ class ApiClient {
 
   async logout() {
     const refreshToken = getRefreshToken();
-    return this.request('/auth/logout', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken }),
-    });
+    
+    // If no refresh token is found, just return success
+    // This handles cases where the user's session has already expired
+    if (!refreshToken) {
+      console.log('No refresh token found, skipping logout API call');
+      return { message: 'Logged out successfully' };
+    }
+    
+    try {
+      return await this.request('/auth/logout', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken }),
+      });
+    } catch (error) {
+      // If the API call fails (e.g., token not found on server), 
+      // we still want to log out locally
+      console.log('Logout API failed, but proceeding with local logout:', error.message);
+      return { message: 'Logged out successfully' };
+    }
   }
 
   // User endpoints
@@ -172,6 +187,15 @@ class ApiClient {
     return this.request('/bookings/my-past');
   }
 
+  // Admin booking endpoints
+  async getUpcomingBookings() {
+    return this.request('/bookings/upcoming');
+  }
+
+  async getPastBookings() {
+    return this.request('/bookings/past');
+  }
+
   async getBookingsByStatus(status) {
     return this.request(`/bookings/status/${status}`);
   }
@@ -188,42 +212,9 @@ class ApiClient {
     return this.request('/bookings/stats');
   }
 
-  // Client endpoints (Admin)
-  async getClients(params = {}) {
-    const queryString = new URLSearchParams(params).toString();
-    return this.request(`/clients?${queryString}`);
-  }
 
-  async getClient(clientId) {
-    return this.request(`/clients/${clientId}`);
-  }
 
-  async createClient(clientData) {
-    return this.request('/clients', {
-      method: 'POST',
-      body: JSON.stringify(clientData),
-    });
-  }
 
-  async updateClient(clientId, clientData) {
-    return this.request(`/clients/${clientId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(clientData),
-    });
-  }
-
-  // Dashboard stats
-  async getDashboardStats() {
-    return this.request('/dashboard/stats');
-  }
-
-  async getAppointmentStats() {
-    return this.request('/dashboard/appointments/stats');
-  }
-
-  async getSlotStats() {
-    return this.request('/dashboard/slots/stats');
-  }
 }
 
 // Create a singleton instance

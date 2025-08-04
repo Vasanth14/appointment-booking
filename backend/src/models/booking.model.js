@@ -133,24 +133,90 @@ bookingSchema.pre('remove', async function(next) {
 
 // Static method to find upcoming bookings for a user
 bookingSchema.statics.findUpcomingByUser = function(userId) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const currentTime = now.toTimeString().slice(0, 5); // Get current time in HH:MM format
+  
   return this.find({
     user: userId,
     status: 'confirmed',
   })
   .populate('slot')
   .populate('user', 'name email')
-  .sort({ 'slot.date': 1, 'slot.startTime': 1 });
+  .then(bookings => {
+    // Filter bookings where slot date is in the future, or slot is today but time is in the future
+    return bookings.filter(booking => {
+      if (!booking.slot) return false;
+      
+      const slotDate = new Date(booking.slot.date);
+      const slotDateOnly = new Date(slotDate.getFullYear(), slotDate.getMonth(), slotDate.getDate());
+      
+      // If slot date is in the future, it's upcoming
+      if (slotDateOnly > today) {
+        return true;
+      }
+      
+      // If slot is today, check if the time is in the future
+      if (slotDateOnly.getTime() === today.getTime()) {
+        return booking.slot.startTime > currentTime;
+      }
+      
+      // If slot date is in the past, it's not upcoming
+      return false;
+    });
+  })
+  .then(bookings => {
+    // Sort by date and time
+    return bookings.sort((a, b) => {
+      const dateA = new Date(a.slot.date + 'T' + a.slot.startTime);
+      const dateB = new Date(b.slot.date + 'T' + b.slot.startTime);
+      return dateA - dateB;
+    });
+  });
 };
 
 // Static method to find past bookings for a user
 bookingSchema.statics.findPastByUser = function(userId) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const currentTime = now.toTimeString().slice(0, 5); // Get current time in HH:MM format
+  
   return this.find({
     user: userId,
-    status: { $in: ['completed', 'cancelled'] },
+    status: { $in: ['completed', 'cancelled', 'confirmed'] }, // Include confirmed bookings that might be past
   })
   .populate('slot')
   .populate('user', 'name email')
-  .sort({ 'slot.date': -1, 'slot.startTime': -1 });
+  .then(bookings => {
+    // Filter bookings where slot date is in the past, or slot is today but time has passed
+    return bookings.filter(booking => {
+      if (!booking.slot) return false;
+      
+      const slotDate = new Date(booking.slot.date);
+      const slotDateOnly = new Date(slotDate.getFullYear(), slotDate.getMonth(), slotDate.getDate());
+      
+      // If slot date is in the past, it's past
+      if (slotDateOnly < today) {
+        return true;
+      }
+      
+      // If slot is today, check if the time has passed
+      if (slotDateOnly.getTime() === today.getTime()) {
+        return booking.slot.startTime <= currentTime;
+      }
+      
+      // If slot date is in the future, it's not past
+      return false;
+    });
+  })
+  .then(bookings => {
+    // Sort by date and time (most recent first)
+    return bookings.sort((a, b) => {
+      const dateA = new Date(a.slot.date + 'T' + a.slot.startTime);
+      const dateB = new Date(b.slot.date + 'T' + b.slot.startTime);
+      return dateB - dateA;
+    });
+  });
 };
 
 // Static method to find all bookings (admin)
@@ -159,6 +225,92 @@ bookingSchema.statics.findAllBookings = function() {
   .populate('slot')
   .populate('user', 'name email')
   .sort({ createdAt: -1 });
+};
+
+// Static method to find upcoming bookings (admin)
+bookingSchema.statics.findUpcoming = function() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const currentTime = now.toTimeString().slice(0, 5); // Get current time in HH:MM format
+  
+  return this.find({
+    status: 'confirmed',
+  })
+  .populate('slot')
+  .populate('user', 'name email')
+  .then(bookings => {
+    // Filter bookings where slot date is in the future, or slot is today but time is in the future
+    return bookings.filter(booking => {
+      if (!booking.slot) return false;
+      
+      const slotDate = new Date(booking.slot.date);
+      const slotDateOnly = new Date(slotDate.getFullYear(), slotDate.getMonth(), slotDate.getDate());
+      
+      // If slot date is in the future, it's upcoming
+      if (slotDateOnly > today) {
+        return true;
+      }
+      
+      // If slot is today, check if the time is in the future
+      if (slotDateOnly.getTime() === today.getTime()) {
+        return booking.slot.startTime > currentTime;
+      }
+      
+      // If slot date is in the past, it's not upcoming
+      return false;
+    });
+  })
+  .then(bookings => {
+    // Sort by date and time
+    return bookings.sort((a, b) => {
+      const dateA = new Date(a.slot.date + 'T' + a.slot.startTime);
+      const dateB = new Date(b.slot.date + 'T' + b.slot.startTime);
+      return dateA - dateB;
+    });
+  });
+};
+
+// Static method to find past bookings (admin)
+bookingSchema.statics.findPast = function() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const currentTime = now.toTimeString().slice(0, 5); // Get current time in HH:MM format
+  
+  return this.find({
+    status: { $in: ['completed', 'cancelled', 'confirmed'] }, // Include confirmed bookings that might be past
+  })
+  .populate('slot')
+  .populate('user', 'name email')
+  .then(bookings => {
+    // Filter bookings where slot date is in the past, or slot is today but time has passed
+    return bookings.filter(booking => {
+      if (!booking.slot) return false;
+      
+      const slotDate = new Date(booking.slot.date);
+      const slotDateOnly = new Date(slotDate.getFullYear(), slotDate.getMonth(), slotDate.getDate());
+      
+      // If slot date is in the past, it's past
+      if (slotDateOnly < today) {
+        return true;
+      }
+      
+      // If slot is today, check if the time has passed
+      if (slotDateOnly.getTime() === today.getTime()) {
+        return booking.slot.startTime <= currentTime;
+      }
+      
+      // If slot date is in the future, it's not past
+      return false;
+    });
+  })
+  .then(bookings => {
+    // Sort by date and time (most recent first)
+    return bookings.sort((a, b) => {
+      const dateA = new Date(a.slot.date + 'T' + a.slot.startTime);
+      const dateB = new Date(b.slot.date + 'T' + b.slot.startTime);
+      return dateB - dateA;
+    });
+  });
 };
 
 // Method to cancel booking

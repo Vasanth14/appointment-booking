@@ -36,7 +36,7 @@ export default function Home() {
             <span className="text-blue-600"> Appointments</span>
           </h1>
           <p className="text-xl text-slate-600 dark:text-slate-300 mb-8">
-            Manage appointments, schedules, and client relationships with our intuitive dashboard. 
+            Manage appointments and schedules with our intuitive dashboard. 
             Built for modern businesses that value efficiency and user experience.
           </p>
           <div className="flex items-center justify-center space-x-4">

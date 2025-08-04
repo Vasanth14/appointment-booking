@@ -98,6 +98,30 @@ export const fetchPastBookings = createAsyncThunk(
   }
 );
 
+export const fetchAdminUpcomingBookings = createAsyncThunk(
+  'bookings/fetchAdminUpcomingBookings',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.getUpcomingBookings();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to fetch upcoming bookings');
+    }
+  }
+);
+
+export const fetchAdminPastBookings = createAsyncThunk(
+  'bookings/fetchAdminPastBookings',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.getPastBookings();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to fetch past bookings');
+    }
+  }
+);
+
 const initialState = {
   bookings: [],
   myBookings: [],
@@ -249,20 +273,50 @@ const bookingSlice = createSlice({
         state.error = action.payload;
       })
       
-      // Fetch Past Bookings
-      .addCase(fetchPastBookings.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchPastBookings.fulfilled, (state, action) => {
-        state.loading = false;
-        state.pastBookings = action.payload;
-        state.error = null;
-      })
-      .addCase(fetchPastBookings.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
+             // Fetch Past Bookings
+       .addCase(fetchPastBookings.pending, (state) => {
+         state.loading = true;
+         state.error = null;
+       })
+       .addCase(fetchPastBookings.fulfilled, (state, action) => {
+         state.loading = false;
+         state.pastBookings = action.payload;
+         state.error = null;
+       })
+       .addCase(fetchPastBookings.rejected, (state, action) => {
+         state.loading = false;
+         state.error = action.payload;
+       })
+       
+       // Fetch Admin Upcoming Bookings
+       .addCase(fetchAdminUpcomingBookings.pending, (state) => {
+         state.loading = true;
+         state.error = null;
+       })
+       .addCase(fetchAdminUpcomingBookings.fulfilled, (state, action) => {
+         state.loading = false;
+         state.upcomingBookings = action.payload;
+         state.error = null;
+       })
+       .addCase(fetchAdminUpcomingBookings.rejected, (state, action) => {
+         state.loading = false;
+         state.error = action.payload;
+       })
+       
+       // Fetch Admin Past Bookings
+       .addCase(fetchAdminPastBookings.pending, (state) => {
+         state.loading = true;
+         state.error = null;
+       })
+       .addCase(fetchAdminPastBookings.fulfilled, (state, action) => {
+         state.loading = false;
+         state.pastBookings = action.payload;
+         state.error = null;
+       })
+       .addCase(fetchAdminPastBookings.rejected, (state, action) => {
+         state.loading = false;
+         state.error = action.payload;
+       });
   },
 });
 

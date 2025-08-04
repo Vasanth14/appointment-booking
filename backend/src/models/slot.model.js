@@ -75,13 +75,17 @@ slotSchema.virtual('isAvailable').get(function() {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentTime = now.toTimeString().slice(0, 5);
   
+  // Add 15-minute buffer to prevent booking slots that are too close
+  const bufferTime = new Date(now.getTime() + 15 * 60 * 1000);
+  const bufferTimeString = bufferTime.toTimeString().slice(0, 5);
+  
   // Check if slot date is in the future
   if (this.date > today) {
     return true;
   }
   
-  // Check if slot is today but time is in the future
-  if (this.date.getTime() === today.getTime() && this.startTime > currentTime) {
+  // Check if slot is today but time is in the future (with buffer)
+  if (this.date.getTime() === today.getTime() && this.startTime > bufferTimeString) {
     return true;
   }
   
@@ -120,16 +124,20 @@ slotSchema.statics.findAvailable = function() {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentTime = now.toTimeString().slice(0, 5); // Get current time in HH:MM format
   
+  // Add 15-minute buffer to prevent booking slots that are too close
+  const bufferTime = new Date(now.getTime() + 15 * 60 * 1000);
+  const bufferTimeString = bufferTime.toTimeString().slice(0, 5);
+  
   return this.find({
     isActive: true,
-    $expr: { $lt: ['$currentBookings', '$maxBookings'] },
+    currentBookings: { $lt: 1 }, // Ensure only slots with 0 bookings are returned
     $or: [
       // Future dates
       { date: { $gt: today } },
-      // Today's date with future time
+      // Today's date with future time (with buffer for booking time)
       {
         date: today,
-        startTime: { $gt: currentTime }
+        startTime: { $gt: bufferTimeString }
       }
     ]
   }).sort({ date: 1, startTime: 1 });
@@ -137,7 +145,28 @@ slotSchema.statics.findAvailable = function() {
 
 // Method to check if slot can accept more bookings
 slotSchema.methods.canAcceptBooking = function() {
-  return this.isActive && this.currentBookings < this.maxBookings;
+  // Check basic availability
+  if (!this.isActive || this.currentBookings >= this.maxBookings) {
+    return false;
+  }
+  
+  // Check if slot is in the past or too close to current time
+  const now = new Date();
+  const slotDateTime = new Date(this.date);
+  
+  // Set the time from startTime
+  const [hours, minutes] = this.startTime.split(':');
+  slotDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+  
+  // Add 15-minute buffer to prevent booking slots that are too close
+  const bufferTime = new Date(now.getTime() + 15 * 60 * 1000);
+  
+  // Slot is in the past or too close
+  if (slotDateTime <= bufferTime) {
+    return false;
+  }
+  
+  return true;
 };
 
 // Method to increment booking count
@@ -156,6 +185,20 @@ slotSchema.methods.decrementBookings = function() {
     return this.save();
   }
   throw new Error('No bookings to decrement');
+};
+
+// Method to refresh booking count from actual bookings
+slotSchema.methods.refreshBookingCount = async function() {
+  const mongoose = require('mongoose');
+  const Booking = mongoose.model('Booking');
+  
+  const confirmedBookings = await Booking.countDocuments({
+    slot: this._id,
+    status: 'confirmed'
+  });
+  
+  this.currentBookings = confirmedBookings;
+  return this.save();
 };
 
 // Method to check if a user has already booked this slot
@@ -178,16 +221,20 @@ slotSchema.statics.findAvailableWithUserStatus = async function(userId) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentTime = now.toTimeString().slice(0, 5);
   
+  // Add 15-minute buffer to prevent booking slots that are too close
+  const bufferTime = new Date(now.getTime() + 15 * 60 * 1000);
+  const bufferTimeString = bufferTime.toTimeString().slice(0, 5);
+  
   const slots = await this.find({
     isActive: true,
-    $expr: { $lt: ['$currentBookings', '$maxBookings'] },
+    currentBookings: { $lt: 1 }, // Ensure only slots with 0 bookings are returned
     $or: [
       // Future dates
       { date: { $gt: today } },
-      // Today's date with future time
+      // Today's date with future time (with buffer for booking time)
       {
         date: today,
-        startTime: { $gt: currentTime }
+        startTime: { $gt: bufferTimeString }
       }
     ]
   }).sort({ date: 1, startTime: 1 });
@@ -204,6 +251,26 @@ slotSchema.statics.findAvailableWithUserStatus = async function(userId) {
   );
   
   return slotsWithUserStatus;
+};
+
+// Static method to refresh all slot booking counts
+slotSchema.statics.refreshAllBookingCounts = async function() {
+  const mongoose = require('mongoose');
+  const Booking = mongoose.model('Booking');
+  
+  const slots = await this.find({});
+  
+  for (const slot of slots) {
+    const confirmedBookings = await Booking.countDocuments({
+      slot: slot._id,
+      status: 'confirmed'
+    });
+    
+    slot.currentBookings = confirmedBookings;
+    await slot.save();
+  }
+  
+  return slots.length;
 };
 
 const Slot = mongoose.model('Slot', slotSchema);

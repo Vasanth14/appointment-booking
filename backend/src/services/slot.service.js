@@ -84,6 +84,14 @@ const getAvailableSlotsWithUserStatus = async (userId) => {
 };
 
 /**
+ * Refresh booking counts for all slots
+ * @returns {Promise<number>}
+ */
+const refreshAllBookingCounts = async () => {
+  return Slot.refreshAllBookingCounts();
+};
+
+/**
  * Update slot by id
  * @param {ObjectId} slotId
  * @param {Object} updateBody
@@ -206,6 +214,7 @@ module.exports = {
   querySlots,
   getAvailableSlots,
   getAvailableSlotsWithUserStatus,
+  refreshAllBookingCounts,
   updateSlotById,
   deleteSlotById,
   getSlotsByCreator,

@@ -51,8 +51,8 @@ import {
 
 const columns = [
   {
-    accessorKey: "clientName",
-    header: "Client Name",
+    accessorKey: "userName",
+    header: "User Name",
     cell: ({ row }) => {
       const booking = row.original
       return (

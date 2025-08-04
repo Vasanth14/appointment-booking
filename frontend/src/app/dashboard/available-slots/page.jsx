@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import UserOnly from "@/components/UserOnly";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,9 +57,10 @@ export default function AvailableSlotsPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <UserOnly>
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
                          <div>
           <h1 className="text-3xl font-bold">Available Slots</h1>
           <p className="text-muted-foreground">View available 30-minute appointment slots and book your appointment</p>
@@ -177,6 +179,7 @@ export default function AvailableSlotsPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </UserOnly>
   );
 } 

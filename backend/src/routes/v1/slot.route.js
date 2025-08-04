@@ -20,6 +20,10 @@ router
   .get(auth('manageSlots'), slotController.getSlotStats);
 
 router
+  .route('/refresh-counts')
+  .post(auth('manageSlots'), slotController.refreshAllBookingCounts);
+
+router
   .route('/my-slots')
   .get(auth('manageSlots'), slotController.getSlotsByCreator);
 

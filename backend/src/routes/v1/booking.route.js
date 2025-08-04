@@ -24,6 +24,14 @@ router
   .get(auth('getBookings'), bookingController.getMyPastBookings);
 
 router
+  .route('/upcoming')
+  .get(auth('manageBookings'), bookingController.getUpcomingBookings);
+
+router
+  .route('/past')
+  .get(auth('manageBookings'), bookingController.getPastBookings);
+
+router
   .route('/stats')
   .get(auth('manageBookings'), bookingController.getBookingStats);
 

@@ -290,11 +290,11 @@ export default function RegisterPage() {
               </div>
               <div className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Client management tools
+                Appointment scheduling
               </div>
               <div className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Analytics dashboard
+                Booking management
               </div>
             </div>
           </CardContent>

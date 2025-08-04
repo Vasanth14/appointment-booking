@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import UserOnly from "@/components/UserOnly";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -413,12 +414,13 @@ export default function MyBookingsPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">My Bookings</h1>
-        <p className="text-muted-foreground">View and manage your appointments</p>
-      </div>
+    <UserOnly>
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold">My Bookings</h1>
+          <p className="text-muted-foreground">View and manage your appointments</p>
+        </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -449,6 +451,7 @@ export default function MyBookingsPage() {
           />
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </UserOnly>
   );
 } 

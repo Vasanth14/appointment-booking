@@ -17,11 +17,13 @@ export function SiteHeader() {
 
   const handleLogout = async () => {
     try {
-      await dispatch(logoutUser()).unwrap();
-      toast.success('Logged out successfully');
+      const result = await dispatch(logoutUser()).unwrap();
+      toast.success(result.message || 'Logged out successfully');
       // AuthRouter will handle the redirect automatically
     } catch (error) {
-      toast.error('Logout failed');
+      console.error('Logout error:', error);
+      // Even if there's an error, the user should still be logged out locally
+      toast.success('Logged out successfully');
     }
   };
 

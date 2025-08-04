@@ -76,6 +76,11 @@ const getSlotsByDateRange = catchAsync(async (req, res) => {
   res.send(slots);
 });
 
+const refreshAllBookingCounts = catchAsync(async (req, res) => {
+  const count = await slotService.refreshAllBookingCounts();
+  res.send({ message: `Refreshed booking counts for ${count} slots` });
+});
+
 module.exports = {
   createSlot,
   getSlots,
@@ -86,4 +91,5 @@ module.exports = {
   getSlotStats,
   getSlotsByCreator,
   getSlotsByDateRange,
+  refreshAllBookingCounts,
 }; 

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import apiClient from '@/lib/api';
 import { setTokens, clearTokens, getAccessToken, decodeToken } from '@/lib/tokenUtils';
+import { performLogout } from '@/lib/logoutUtils';
 
 // Async thunks
 export const loginUser = createAsyncThunk(
@@ -48,14 +49,15 @@ export const logoutUser = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      await apiClient.logout();
-      clearTokens();
-      localStorage.removeItem('user');
-      return null;
+      const result = await performLogout();
+      
+      if (result.success) {
+        return { message: result.message };
+      } else {
+        return rejectWithValue(result.message);
+      }
     } catch (error) {
-      // Even if logout API fails, clear local storage
-      clearTokens();
-      localStorage.removeItem('user');
+      console.error('Logout error:', error);
       return rejectWithValue(error.message || 'Logout failed');
     }
   }

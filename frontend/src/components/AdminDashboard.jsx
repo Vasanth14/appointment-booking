@@ -4,27 +4,32 @@ import { useState, useEffect } from 'react';
 import AdminOnly from "@/components/AdminOnly"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Loader2 } from "lucide-react"
+import { Calendar, Loader2, RefreshCw } from "lucide-react"
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { 
-  fetchAllBookings,
-  selectBookings,
+  fetchAdminUpcomingBookings,
+  fetchAdminPastBookings,
+  selectUpcomingBookings,
+  selectPastBookings,
   selectBookingsLoading,
   selectBookingsError 
 } from '@/store/slices/bookingSlice';
+import { Button } from "@/components/ui/button";
 import { AppointmentsDataTable } from '@/components/appointments-data-table';
 import { toast } from 'sonner';
 
 export default function AdminDashboard() {
   const dispatch = useAppDispatch();
-  const bookings = useAppSelector(selectBookings);
+  const upcomingBookings = useAppSelector(selectUpcomingBookings);
+  const pastBookings = useAppSelector(selectPastBookings);
   const loading = useAppSelector(selectBookingsLoading);
   const error = useAppSelector(selectBookingsError);
 
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('upcoming');
 
   useEffect(() => {
-    dispatch(fetchAllBookings());
+    dispatch(fetchAdminUpcomingBookings());
+    dispatch(fetchAdminPastBookings());
   }, [dispatch]);
 
   useEffect(() => {
@@ -33,139 +38,111 @@ export default function AdminDashboard() {
     }
   }, [error]);
 
-  const filterBookings = (status) => {
-    if (!Array.isArray(bookings)) return [];
-    if (status === 'all') return bookings;
-    return bookings.filter(booking => booking.status === status);
+  const handleRefreshBookingCounts = async () => {
+    try {
+      const response = await fetch('/api/v1/slots/refresh-counts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(result.message);
+        // Refresh the bookings data
+        dispatch(fetchAdminUpcomingBookings());
+        dispatch(fetchAdminPastBookings());
+      } else {
+        toast.error('Failed to refresh booking counts');
+      }
+    } catch (error) {
+      console.error('Error refreshing booking counts:', error);
+      toast.error('Failed to refresh booking counts');
+    }
   };
-
-  const confirmedBookings = filterBookings('confirmed');
-  const cancelledBookings = filterBookings('cancelled');
-  const completedBookings = filterBookings('completed');
 
   return (
     <AdminOnly>
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold">All Bookings</h1>
-          <p className="text-muted-foreground">View and manage all appointment bookings</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold">All Bookings</h1>
+            <p className="text-muted-foreground">View and manage all appointment bookings</p>
+          </div>
+          <Button 
+            onClick={handleRefreshBookingCounts}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh Counts
+          </Button>
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold">{Array.isArray(bookings) ? bookings.length : 0}</div>
-              <p className="text-sm text-muted-foreground">Total Bookings</p>
+              <div className="text-2xl font-bold text-green-600">{Array.isArray(upcomingBookings) ? upcomingBookings.length : 0}</div>
+              <p className="text-sm text-muted-foreground">Upcoming Bookings</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-green-600">{confirmedBookings.length}</div>
-              <p className="text-sm text-muted-foreground">Confirmed</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-blue-600">{completedBookings.length}</div>
-              <p className="text-sm text-muted-foreground">Completed</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-red-600">{cancelledBookings.length}</div>
-              <p className="text-sm text-muted-foreground">Cancelled</p>
+              <div className="text-2xl font-bold text-blue-600">{Array.isArray(pastBookings) ? pastBookings.length : 0}</div>
+              <p className="text-sm text-muted-foreground">Past Bookings</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">
-              All ({Array.isArray(bookings) ? bookings.length : 0})
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upcoming">
+              Upcoming ({Array.isArray(upcomingBookings) ? upcomingBookings.length : 0})
             </TabsTrigger>
-            <TabsTrigger value="confirmed">
-              Confirmed ({confirmedBookings.length})
-            </TabsTrigger>
-            <TabsTrigger value="completed">
-              Completed ({completedBookings.length})
-            </TabsTrigger>
-            <TabsTrigger value="cancelled">
-              Cancelled ({cancelledBookings.length})
+            <TabsTrigger value="past">
+              Past ({Array.isArray(pastBookings) ? pastBookings.length : 0})
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="space-y-4">
+          <TabsContent value="upcoming" className="space-y-4">
             {loading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-            ) : !Array.isArray(bookings) || bookings.length === 0 ? (
+            ) : !Array.isArray(upcomingBookings) || upcomingBookings.length === 0 ? (
               <Card>
                 <CardContent className="py-8 text-center">
                   <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No bookings found</h3>
-                  <p className="text-muted-foreground">No appointments have been booked yet.</p>
+                  <h3 className="text-lg font-medium mb-2">No upcoming bookings</h3>
+                  <p className="text-muted-foreground">No upcoming appointments found.</p>
                 </CardContent>
               </Card>
             ) : (
-              <AppointmentsDataTable data={bookings} loading={loading} />
+              <AppointmentsDataTable data={upcomingBookings} loading={false} />
             )}
           </TabsContent>
 
-          <TabsContent value="confirmed" className="space-y-4">
+          <TabsContent value="past" className="space-y-4">
             {loading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-            ) : confirmedBookings.length === 0 ? (
+            ) : !Array.isArray(pastBookings) || pastBookings.length === 0 ? (
               <Card>
                 <CardContent className="py-8 text-center">
                   <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No confirmed bookings</h3>
-                  <p className="text-muted-foreground">No confirmed appointments found.</p>
+                  <h3 className="text-lg font-medium mb-2">No past bookings</h3>
+                  <p className="text-muted-foreground">No past appointments found.</p>
                 </CardContent>
               </Card>
             ) : (
-              <AppointmentsDataTable data={confirmedBookings} loading={false} />
-            )}
-          </TabsContent>
-
-          <TabsContent value="completed" className="space-y-4">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : completedBookings.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No completed bookings</h3>
-                  <p className="text-muted-foreground">No completed appointments found.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <AppointmentsDataTable data={completedBookings} loading={false} />
-            )}
-          </TabsContent>
-
-          <TabsContent value="cancelled" className="space-y-4">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : cancelledBookings.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No cancelled bookings</h3>
-                  <p className="text-muted-foreground">No cancelled appointments found.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <AppointmentsDataTable data={cancelledBookings} loading={false} />
+              <AppointmentsDataTable data={pastBookings} loading={false} />
             )}
           </TabsContent>
         </Tabs>

@@ -10,6 +10,29 @@ const httpStatus = require('http-status');
  * @returns {Promise<Booking>}
  */
 const createBooking = async (bookingBody) => {
+  // Validate that the slot is not in the past
+  const Slot = models.Slot;
+  const slot = await Slot.findById(bookingBody.slot);
+  
+  if (!slot) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Slot not found');
+  }
+  
+  // Check if slot is in the past or too close to current time
+  const now = new Date();
+  const slotDateTime = new Date(slot.date);
+  
+  // Set the time from startTime
+  const [hours, minutes] = slot.startTime.split(':');
+  slotDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+  
+  // Add 15-minute buffer to prevent booking slots that are too close
+  const bufferTime = new Date(now.getTime() + 15 * 60 * 1000);
+  
+  if (slotDateTime <= bufferTime) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot book slots that are less than 15 minutes away');
+  }
+  
   return Booking.create(bookingBody);
 };
 
@@ -64,6 +87,22 @@ const getUpcomingBookingsByUser = async (userId) => {
  */
 const getPastBookingsByUser = async (userId) => {
   return Booking.findPastByUser(userId);
+};
+
+/**
+ * Get upcoming bookings (admin)
+ * @returns {Promise<Booking[]>}
+ */
+const getUpcomingBookings = async () => {
+  return Booking.findUpcoming();
+};
+
+/**
+ * Get past bookings (admin)
+ * @returns {Promise<Booking[]>}
+ */
+const getPastBookings = async () => {
+  return Booking.findPast();
 };
 
 /**
@@ -220,6 +259,8 @@ module.exports = {
   queryBookings,
   getUpcomingBookingsByUser,
   getPastBookingsByUser,
+  getUpcomingBookings,
+  getPastBookings,
   getAllBookings,
   updateBookingById,
   cancelBooking,

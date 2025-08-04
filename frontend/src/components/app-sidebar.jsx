@@ -3,17 +3,11 @@
 import * as React from "react";
 import {
   ArrowUpCircleIcon,
-  BarChartIcon,
   CalendarIcon,
   ClipboardListIcon,
   DatabaseIcon,
-  FileTextIcon,
-  HelpCircleIcon,
   LayoutDashboardIcon,
   ListIcon,
-  SearchIcon,
-  SettingsIcon,
-  UsersIcon,
   PlusIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -56,16 +50,6 @@ export function AppSidebar({ ...props }) {
       url: "/dashboard/appointments",
       icon: ClipboardListIcon,
     },
-    {
-      title: "Clients",
-      url: "/dashboard/clients",
-      icon: UsersIcon,
-    },
-    {
-      title: "Analytics",
-      url: "/dashboard/analytics",
-      icon: BarChartIcon,
-    },
   ];
 
   const userNavItems = [
@@ -104,11 +88,6 @@ export function AppSidebar({ ...props }) {
           name: "Booking Reports",
           url: "/dashboard/appointments",
           icon: ClipboardListIcon,
-        },
-        {
-          name: "Client Reports",
-          url: "/dashboard/clients",
-          icon: FileTextIcon,
         },
       ]
     : [
@@ -156,7 +135,6 @@ export function AppSidebar({ ...props }) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navItems} />
-        <NavDocuments items={documents} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

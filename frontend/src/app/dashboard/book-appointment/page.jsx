@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import UserOnly from "@/components/UserOnly";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -94,6 +95,25 @@ export default function BookAppointmentPage() {
       return;
     }
     
+    // Check if slot is in the past or too close
+    const now = new Date();
+    const slotDateTime = new Date(slot.date);
+    const [hours, minutes] = slot.startTime.split(':');
+    slotDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    // Add 15-minute buffer to prevent booking slots that are too close
+    const bufferTime = new Date(now.getTime() + 15 * 60 * 1000);
+    
+    if (slotDateTime <= now) {
+      toast.error('Cannot book slots in the past');
+      return;
+    }
+    
+    if (slotDateTime <= bufferTime) {
+      toast.error('Cannot book slots that are less than 15 minutes away');
+      return;
+    }
+    
     setSelectedSlot(slot);
     setShowBookingForm(true);
     console.log('Booking form should now be visible');
@@ -138,6 +158,17 @@ export default function BookAppointmentPage() {
 
     if (!selectedSlot || !selectedSlot.id) {
       toast.error('Please select a slot first');
+      return;
+    }
+
+    // Double-check that the selected slot is not in the past or too close
+    if (isSlotActuallyPast(selectedSlot)) {
+      toast.error('Cannot book slots in the past');
+      return;
+    }
+    
+    if (isSlotInPast(selectedSlot)) {
+      toast.error('Cannot book slots that are less than 15 minutes away');
       return;
     }
 
@@ -190,13 +221,35 @@ export default function BookAppointmentPage() {
     });
   };
 
+  const isSlotInPast = (slot) => {
+    const now = new Date();
+    const slotDateTime = new Date(slot.date);
+    const [hours, minutes] = slot.startTime.split(':');
+    slotDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    // Add 15-minute buffer to prevent booking slots that are too close
+    const bufferTime = new Date(now.getTime() + 15 * 60 * 1000);
+    
+    return slotDateTime <= bufferTime;
+  };
+
+  const isSlotActuallyPast = (slot) => {
+    const now = new Date();
+    const slotDateTime = new Date(slot.date);
+    const [hours, minutes] = slot.startTime.split(':');
+    slotDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    return slotDateTime <= now;
+  };
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Book Appointment</h1>
-        <p className="text-muted-foreground">Select an available 30-minute slot and book your appointment</p>
-      </div>
+    <UserOnly>
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold">Book Appointment</h1>
+          <p className="text-muted-foreground">Select an available 30-minute slot and book your appointment</p>
+        </div>
 
       {/* Available Slots */}
       <div className="space-y-4">
@@ -217,11 +270,14 @@ export default function BookAppointmentPage() {
                  ) : (
            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
              {console.log('Rendering available slots:', availableSlots)}
-                          {availableSlots.map((slot) => (
+                          {availableSlots.map((slot) => {
+               const isPast = isSlotInPast(slot);
+               const isActuallyPast = isSlotActuallyPast(slot);
+               return (
                <Card 
                  key={slot.id} 
                  className={`transition-all ${
-                   slot.isBookedByUser 
+                   slot.isBookedByUser || isPast
                      ? 'opacity-75 cursor-not-allowed' 
                      : 'cursor-pointer hover:shadow-md'
                  } ${
@@ -252,19 +308,28 @@ export default function BookAppointmentPage() {
                         <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
                           You have booked this
                         </Badge>
+                                             ) : isActuallyPast ? (
+                         <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">
+                           Past
+                         </Badge>
+                       ) : isPast ? (
+                         <Badge variant="secondary" className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100">
+                           Too Soon
+                         </Badge>
                       ) : (
                         <Badge variant="default">
                           Available
                         </Badge>
                       )}
-                      <Badge variant="outline">
-                        {slot.currentBookings || 0}/1 booked
-                      </Badge>
+                                             <Badge variant="outline">
+                         {slot.currentBookings || 0}/1 booked
+                       </Badge>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+             );
+           })}
           </div>
         )}
       </div>
@@ -367,6 +432,7 @@ export default function BookAppointmentPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </UserOnly>
   );
 } 

@@ -60,6 +60,16 @@ const getMyPastBookings = catchAsync(async (req, res) => {
   res.send(bookings);
 });
 
+const getUpcomingBookings = catchAsync(async (req, res) => {
+  const bookings = await bookingService.getUpcomingBookings();
+  res.send(bookings);
+});
+
+const getPastBookings = catchAsync(async (req, res) => {
+  const bookings = await bookingService.getPastBookings();
+  res.send(bookings);
+});
+
 const getBookingsByStatus = catchAsync(async (req, res) => {
   const { status } = req.params;
   const bookings = await bookingService.getBookingsByStatus(status);
@@ -94,6 +104,8 @@ module.exports = {
   deleteBooking,
   getMyUpcomingBookings,
   getMyPastBookings,
+  getUpcomingBookings,
+  getPastBookings,
   getBookingsByStatus,
   getBookingsBySlot,
   getBookingStats,

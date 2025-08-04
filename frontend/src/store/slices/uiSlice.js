@@ -7,8 +7,6 @@ const initialState = {
     editSlot: false,
     createBooking: false,
     editBooking: false,
-    createClient: false,
-    editClient: false,
   },
   notifications: [],
   theme: 'light', // 'light' or 'dark'
