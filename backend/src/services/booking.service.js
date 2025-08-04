@@ -174,60 +174,7 @@ const deleteBookingById = async (bookingId) => {
   return booking;
 };
 
-/**
- * Get bookings by status
- * @param {string} status
- * @returns {Promise<Booking[]>}
- */
-const getBookingsByStatus = async (status) => {
-  return Booking.find({ status })
-    .populate('slot')
-    .populate('user', 'name email')
-    .sort({ createdAt: -1 });
-};
 
-/**
- * Get bookings by slot
- * @param {ObjectId} slotId
- * @returns {Promise<Booking[]>}
- */
-const getBookingsBySlot = async (slotId) => {
-  return Booking.find({ slot: slotId })
-    .populate('user', 'name email')
-    .sort({ createdAt: -1 });
-};
-
-/**
- * Get booking statistics
- * @returns {Promise<Object>}
- */
-const getBookingStats = async () => {
-  const totalBookings = await Booking.countDocuments();
-  const confirmedBookings = await Booking.countDocuments({ status: 'confirmed' });
-  const cancelledBookings = await Booking.countDocuments({ status: 'cancelled' });
-  const completedBookings = await Booking.countDocuments({ status: 'completed' });
-  
-  // Get today's bookings
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  
-  const todayBookings = await Booking.countDocuments({
-    createdAt: {
-      $gte: today,
-      $lt: tomorrow,
-    },
-  });
-  
-  return {
-    totalBookings,
-    confirmedBookings,
-    cancelledBookings,
-    completedBookings,
-    todayBookings,
-  };
-};
 
 /**
  * Check if user can book a slot
@@ -266,8 +213,5 @@ module.exports = {
   cancelBooking,
   completeBooking,
   deleteBookingById,
-  getBookingsByStatus,
-  getBookingsBySlot,
-  getBookingStats,
   canUserBookSlot,
 }; 

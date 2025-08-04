@@ -12,7 +12,6 @@ function ReduxInitializer({ children }) {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    console.log('ReduxInitializer: Checking auth on app load');
     
     // First, initialize token from localStorage
     dispatch(initializeToken());
@@ -20,8 +19,6 @@ function ReduxInitializer({ children }) {
     // Check if there's a token in localStorage first
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
-    console.log('ReduxInitializer: Token in localStorage:', token ? 'exists' : 'null');
-    console.log('ReduxInitializer: User in localStorage:', user ? 'exists' : 'null');
     
     if (token && user) {
       // If both token and user exist, check authentication

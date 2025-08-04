@@ -253,25 +253,7 @@ slotSchema.statics.findAvailableWithUserStatus = async function(userId) {
   return slotsWithUserStatus;
 };
 
-// Static method to refresh all slot booking counts
-slotSchema.statics.refreshAllBookingCounts = async function() {
-  const mongoose = require('mongoose');
-  const Booking = mongoose.model('Booking');
-  
-  const slots = await this.find({});
-  
-  for (const slot of slots) {
-    const confirmedBookings = await Booking.countDocuments({
-      slot: slot._id,
-      status: 'confirmed'
-    });
-    
-    slot.currentBookings = confirmedBookings;
-    await slot.save();
-  }
-  
-  return slots.length;
-};
+
 
 const Slot = mongoose.model('Slot', slotSchema);
 

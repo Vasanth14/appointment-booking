@@ -29,15 +29,17 @@ const updateUser = catchAsync(async (req, res) => {
   res.send(user);
 });
 
-const deleteUser = catchAsync(async (req, res) => {
-  await userService.deleteUserById(req.params.userId);
-  res.status(httpStatus.NO_CONTENT).send();
+const getProfile = catchAsync(async (req, res) => {
+  const user = await userService.getUserById(req.user.id);
+  res.send(user);
+});
+
+const updateProfile = catchAsync(async (req, res) => {
+  const user = await userService.updateUserById(req.user.id, req.body);
+  res.send(user);
 });
 
 module.exports = {
-  createUser,
-  getUsers,
-  getUser,
-  updateUser,
-  deleteUser,
+  getProfile,
+  updateProfile,
 };

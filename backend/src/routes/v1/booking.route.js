@@ -31,21 +31,7 @@ router
   .route('/past')
   .get(auth('manageBookings'), bookingController.getPastBookings);
 
-router
-  .route('/stats')
-  .get(auth('manageBookings'), bookingController.getBookingStats);
 
-router
-  .route('/status/:status')
-  .get(auth('manageBookings'), validate(bookingValidation.getBookingsByStatus), bookingController.getBookingsByStatus);
-
-router
-  .route('/slot/:slotId')
-  .get(auth('manageBookings'), validate(bookingValidation.getBookingsBySlot), bookingController.getBookingsBySlot);
-
-router
-  .route('/can-book/:slotId')
-  .get(auth('createBookings'), validate(bookingValidation.canBookSlot), bookingController.canBookSlot);
 
 router
   .route('/:bookingId')

@@ -42,18 +42,14 @@ const sendVerificationEmail = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
-const verifyEmail = catchAsync(async (req, res) => {
-  await authService.verifyEmail(req.query.token);
-  res.status(httpStatus.NO_CONTENT).send();
+const getMe = catchAsync(async (req, res) => {
+  const user = await userService.getUserById(req.user.id);
+  res.send(user);
 });
 
 module.exports = {
   register,
   login,
   logout,
-  refreshTokens,
-  forgotPassword,
-  resetPassword,
-  sendVerificationEmail,
-  verifyEmail,
+  getMe,
 };

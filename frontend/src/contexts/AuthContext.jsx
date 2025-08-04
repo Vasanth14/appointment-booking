@@ -21,12 +21,24 @@ export function AuthProvider({ children }) {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        const userData = await apiClient.getProfile();
-        setUser(userData.data);
+        // Only make API call if we have a token
+        try {
+          const userData = await apiClient.getProfile();
+          setUser(userData.data);
+        } catch (error) {
+          console.error('Token validation failed:', error);
+          // If token is invalid, clear it
+          localStorage.removeItem('token');
+          setUser(null);
+        }
+      } else {
+        // No token found, user is not authenticated
+        setUser(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('token');
+      setUser(null);
     } finally {
       setLoading(false);
     }

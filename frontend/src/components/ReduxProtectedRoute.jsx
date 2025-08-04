@@ -20,9 +20,13 @@ export default function ReduxProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
-    // Check authentication on mount
+    // Only check authentication if we haven't initialized yet and auth is required
     if (!isAuthenticated && requireAuth) {
-      dispatch(checkAuth());
+      // Check if we have a token before making API call
+      const token = localStorage.getItem('token');
+      if (token) {
+        dispatch(checkAuth());
+      }
     }
   }, [dispatch, isAuthenticated, requireAuth]);
 

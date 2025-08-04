@@ -67,40 +67,29 @@ export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
   async (_, { rejectWithValue }) => {
     try {
-      const token = getAccessToken();
-      
+      // First check if we have a token
+      const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No token found');
+        // No token, user is not authenticated
+        return null;
       }
-      
-      // Decode and validate token
-      const decodedToken = decodeToken(token);
-      if (!decodedToken) {
-        throw new Error('Invalid token format');
-      }
-      
-      // Check if token is expired
-      const currentTime = Date.now() / 1000;
-      if (decodedToken.exp < currentTime) {
-        throw new Error('Token expired');
-      }
-      
-      // For now, let's try to get user data from localStorage if available
-      // This is a fallback approach until we fix the backend endpoint
+
+      // Check if we have stored user data
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
           return user;
         } catch (e) {
-          // Failed to parse stored user data
+          // Failed to parse stored user data, continue to API call
         }
       }
       
-      // If no stored user, try API call
+      // If we have a token but no stored user, try API call
       const response = await apiClient.getProfile();
       return response;
     } catch (error) {
+      // If API call fails, clear tokens and return null
       clearTokens();
       return rejectWithValue(error.message || 'Authentication check failed');
     }

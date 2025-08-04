@@ -66,7 +66,6 @@ export default function LoginPage() {
 
   // Handle successful login
   useEffect(() => {
-    console.log('Auth state changed:', { isAuthenticated, loading, isAdmin, user });
     
     if (isAuthenticated && !loading) {
       toast.success('Login successful!');

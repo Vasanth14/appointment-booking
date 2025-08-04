@@ -70,28 +70,7 @@ const getPastBookings = catchAsync(async (req, res) => {
   res.send(bookings);
 });
 
-const getBookingsByStatus = catchAsync(async (req, res) => {
-  const { status } = req.params;
-  const bookings = await bookingService.getBookingsByStatus(status);
-  res.send(bookings);
-});
 
-const getBookingsBySlot = catchAsync(async (req, res) => {
-  const { slotId } = req.params;
-  const bookings = await bookingService.getBookingsBySlot(slotId);
-  res.send(bookings);
-});
-
-const getBookingStats = catchAsync(async (req, res) => {
-  const stats = await bookingService.getBookingStats();
-  res.send(stats);
-});
-
-const canBookSlot = catchAsync(async (req, res) => {
-  const { slotId } = req.params;
-  const canBook = await bookingService.canUserBookSlot(req.user.id, slotId);
-  res.send({ canBook });
-});
 
 module.exports = {
   createBooking,
@@ -106,8 +85,4 @@ module.exports = {
   getMyPastBookings,
   getUpcomingBookings,
   getPastBookings,
-  getBookingsByStatus,
-  getBookingsBySlot,
-  getBookingStats,
-  canBookSlot,
 }; 

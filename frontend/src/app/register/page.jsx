@@ -14,8 +14,7 @@ import { toast } from 'sonner';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -47,12 +46,8 @@ export default function RegisterPage() {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-    
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
     }
     
     if (!formData.email) {
@@ -63,8 +58,10 @@ export default function RegisterPage() {
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    } else if (!/\d/.test(formData.password) || !/[a-zA-Z]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one letter and one number';
     }
     
     if (!formData.confirmPassword) {
@@ -104,11 +101,9 @@ export default function RegisterPage() {
     }
     
     dispatch(registerUser({
-      firstName: formData.firstName,
-      lastName: formData.lastName,
+      name: formData.name,
       email: formData.email,
-      password: formData.password,
-      role: 'user' // Default role for new registrations
+      password: formData.password
     }));
   };
 
@@ -125,7 +120,6 @@ export default function RegisterPage() {
             <Calendar className="h-8 w-8 text-blue-600" />
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">AppointMate</h1>
           </div>
-          <Badge variant="secondary">Join us today</Badge>
         </div>
 
         {/* Register Card */}
@@ -138,39 +132,21 @@ export default function RegisterPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    placeholder="John"
-                    className={`w-full ${errors.firstName ? 'border-red-500' : ''}`}
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    disabled={loading}
-                  />
-                  {errors.firstName && (
-                    <p className="text-sm text-red-500">{errors.firstName}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    placeholder="Doe"
-                    className={`w-full ${errors.lastName ? 'border-red-500' : ''}`}
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    disabled={loading}
-                  />
-                  {errors.lastName && (
-                    <p className="text-sm text-red-500">{errors.lastName}</p>
-                  )}
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="John Doe"
+                  className={`w-full ${errors.name ? 'border-red-500' : ''}`}
+                  value={formData.name}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name}</p>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -205,6 +181,9 @@ export default function RegisterPage() {
                 {errors.password && (
                   <p className="text-sm text-red-500">{errors.password}</p>
                 )}
+                <p className="text-xs text-slate-500">
+                  Must be at least 8 characters with at least one letter and one number
+                </p>
               </div>
               
               <div className="space-y-2">
@@ -275,30 +254,6 @@ export default function RegisterPage() {
           </CardContent>
         </Card>
 
-        {/* Features List */}
-        <Card className="mt-6 border-0 shadow-lg bg-green-50 dark:bg-green-900/20">
-          <CardContent className="p-4">
-            <h3 className="font-medium text-green-900 dark:text-green-100 mb-3">What you'll get:</h3>
-            <div className="space-y-2 text-sm text-green-700 dark:text-green-200">
-              <div className="flex items-center">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Free 14-day trial
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Unlimited appointments
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Appointment scheduling
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Booking management
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

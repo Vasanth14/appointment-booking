@@ -15,13 +15,9 @@ router
   .route('/available')
   .get(slotController.getAvailableSlots);
 
-router
-  .route('/stats')
-  .get(auth('manageSlots'), slotController.getSlotStats);
 
-router
-  .route('/refresh-counts')
-  .post(auth('manageSlots'), slotController.refreshAllBookingCounts);
+
+
 
 router
   .route('/my-slots')

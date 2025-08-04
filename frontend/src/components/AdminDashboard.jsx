@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import AdminOnly from "@/components/AdminOnly"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Loader2, RefreshCw } from "lucide-react"
+import { Calendar, Loader2 } from "lucide-react"
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { 
   fetchAdminUpcomingBookings,
@@ -38,30 +38,7 @@ export default function AdminDashboard() {
     }
   }, [error]);
 
-  const handleRefreshBookingCounts = async () => {
-    try {
-      const response = await fetch('/api/v1/slots/refresh-counts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        toast.success(result.message);
-        // Refresh the bookings data
-        dispatch(fetchAdminUpcomingBookings());
-        dispatch(fetchAdminPastBookings());
-      } else {
-        toast.error('Failed to refresh booking counts');
-      }
-    } catch (error) {
-      console.error('Error refreshing booking counts:', error);
-      toast.error('Failed to refresh booking counts');
-    }
-  };
+
 
   return (
     <AdminOnly>
@@ -72,15 +49,6 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold">All Bookings</h1>
             <p className="text-muted-foreground">View and manage all appointment bookings</p>
           </div>
-          <Button 
-            onClick={handleRefreshBookingCounts}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh Counts
-          </Button>
         </div>
 
         {/* Stats */}

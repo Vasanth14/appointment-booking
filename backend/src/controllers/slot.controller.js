@@ -53,10 +53,7 @@ const deleteSlot = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
-const getSlotStats = catchAsync(async (req, res) => {
-  const stats = await slotService.getSlotStats();
-  res.send(stats);
-});
+
 
 const getSlotsByCreator = catchAsync(async (req, res) => {
   const slots = await slotService.getSlotsByCreator(req.user.id);
@@ -76,10 +73,7 @@ const getSlotsByDateRange = catchAsync(async (req, res) => {
   res.send(slots);
 });
 
-const refreshAllBookingCounts = catchAsync(async (req, res) => {
-  const count = await slotService.refreshAllBookingCounts();
-  res.send({ message: `Refreshed booking counts for ${count} slots` });
-});
+
 
 module.exports = {
   createSlot,
@@ -88,8 +82,6 @@ module.exports = {
   getSlot,
   updateSlot,
   deleteSlot,
-  getSlotStats,
   getSlotsByCreator,
   getSlotsByDateRange,
-  refreshAllBookingCounts,
 }; 

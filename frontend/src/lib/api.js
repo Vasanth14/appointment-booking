@@ -24,7 +24,10 @@ class ApiClient {
         config.headers.Authorization = `Bearer ${token}`;
         console.log('API request: Adding Authorization header with token');
       } else {
-        console.log('API request: No token available');
+        // Only log for non-auth endpoints to reduce noise
+        if (!endpoint.startsWith('/auth/')) {
+          console.log('API request: No token available');
+        }
       }
     }
 
@@ -38,6 +41,12 @@ class ApiClient {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('API error response:', errorData);
+        
+        // Don't log auth-related errors as errors for auth endpoints
+        if (endpoint.startsWith('/auth/') && response.status === 401) {
+          console.log('Auth endpoint returned 401 - this is expected for unauthenticated requests');
+        }
+        
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
@@ -45,7 +54,12 @@ class ApiClient {
       console.log('API success response:', data);
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      // Don't log auth-related errors as errors for auth endpoints
+      if (endpoint.startsWith('/auth/') && error.message.includes('401')) {
+        console.log('Auth endpoint error - this is expected for unauthenticated requests');
+      } else {
+        console.error('API request failed:', error);
+      }
       throw error;
     }
   }
@@ -130,9 +144,7 @@ class ApiClient {
     });
   }
 
-  async getSlotStats() {
-    return this.request('/slots/stats');
-  }
+
 
   // Booking endpoints
   async getBookings(params = {}) {
@@ -196,21 +208,7 @@ class ApiClient {
     return this.request('/bookings/past');
   }
 
-  async getBookingsByStatus(status) {
-    return this.request(`/bookings/status/${status}`);
-  }
 
-  async getBookingsBySlot(slotId) {
-    return this.request(`/bookings/slot/${slotId}`);
-  }
-
-  async canBookSlot(slotId) {
-    return this.request(`/bookings/can-book/${slotId}`);
-  }
-
-  async getBookingStats() {
-    return this.request('/bookings/stats');
-  }
 
 
 

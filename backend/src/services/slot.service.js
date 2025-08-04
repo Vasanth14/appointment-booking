@@ -83,13 +83,7 @@ const getAvailableSlotsWithUserStatus = async (userId) => {
   return Slot.findAvailableWithUserStatus(userId);
 };
 
-/**
- * Refresh booking counts for all slots
- * @returns {Promise<number>}
- */
-const refreshAllBookingCounts = async () => {
-  return Slot.refreshAllBookingCounts();
-};
+
 
 /**
  * Update slot by id
@@ -183,29 +177,7 @@ const getSlotsByDateRange = async (startDate, endDate) => {
   }).sort({ date: 1, startTime: 1 });
 };
 
-/**
- * Get slot statistics
- * @returns {Promise<Object>}
- */
-const getSlotStats = async () => {
-  const totalSlots = await Slot.countDocuments();
-  const activeSlots = await Slot.countDocuments({ isActive: true });
-  const availableSlots = await Slot.countDocuments({
-    isActive: true,
-    $expr: { $lt: ['$currentBookings', '$maxBookings'] }
-  });
-  const fullSlots = await Slot.countDocuments({
-    isActive: true,
-    $expr: { $gte: ['$currentBookings', '$maxBookings'] }
-  });
-  
-  return {
-    totalSlots,
-    activeSlots,
-    availableSlots,
-    fullSlots,
-  };
-};
+
 
 module.exports = {
   createSlot,
@@ -214,10 +186,8 @@ module.exports = {
   querySlots,
   getAvailableSlots,
   getAvailableSlotsWithUserStatus,
-  refreshAllBookingCounts,
   updateSlotById,
   deleteSlotById,
   getSlotsByCreator,
   getSlotsByDateRange,
-  getSlotStats,
 }; 

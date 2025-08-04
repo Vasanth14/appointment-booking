@@ -45,11 +45,6 @@ export function AppSidebar({ ...props }) {
       url: "/dashboard/slots",
       icon: CalendarIcon,
     },
-    {
-      title: "All Bookings",
-      url: "/dashboard/appointments",
-      icon: ClipboardListIcon,
-    },
   ];
 
   const userNavItems = [

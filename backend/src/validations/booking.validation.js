@@ -59,24 +59,6 @@ const completeBooking = {
   }),
 };
 
-const getBookingsByStatus = {
-  params: Joi.object().keys({
-    status: Joi.string().valid('confirmed', 'cancelled', 'completed').required(),
-  }),
-};
-
-const getBookingsBySlot = {
-  params: Joi.object().keys({
-    slotId: Joi.string().custom(objectId).required(),
-  }),
-};
-
-const canBookSlot = {
-  params: Joi.object().keys({
-    slotId: Joi.string().custom(objectId).required(),
-  }),
-};
-
 module.exports = {
   createBooking,
   getBookings,
@@ -85,7 +67,4 @@ module.exports = {
   deleteBooking,
   cancelBooking,
   completeBooking,
-  getBookingsByStatus,
-  getBookingsBySlot,
-  canBookSlot,
 }; 
