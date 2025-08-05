@@ -238,7 +238,7 @@ export default function SlotsPage() {
     <AdminOnly>
       <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center slot-flex">
         <div>
           <h1 className="text-3xl font-bold">Slot Management</h1>
           <p className="text-muted-foreground">Create and manage your appointment slots</p>
@@ -334,7 +334,7 @@ export default function SlotsPage() {
 
       {/* Slots List */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center slot-flex">
           <h2 className="text-2xl font-semibold">Available Slots</h2>
           
           {/* Filter and Sort Controls */}

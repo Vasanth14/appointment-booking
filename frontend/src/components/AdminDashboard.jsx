@@ -52,7 +52,7 @@ export default function AdminDashboard() {
     <AdminOnly>
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start slot-flex">
           <div>
             <h1 className="text-3xl font-bold">All Bookings</h1>
             <p className="text-muted-foreground">View and manage all appointment bookings</p>
